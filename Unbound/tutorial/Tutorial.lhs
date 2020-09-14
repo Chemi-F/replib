@@ -59,7 +59,7 @@ A few other imports we'll need for this particular example:
 > import Control.Arrow ((+++))
 > import Control.Monad
 > import Control.Monad.Trans.Maybe
-> import Control.Monad.Trans.Error
+> import Control.Monad.Trans.Except
 >
 > import Text.Parsec hiding ((<|>), Empty)
 > import qualified Text.Parsec.Token as P
@@ -534,10 +534,10 @@ type checker.
 > appTele (Cons rb) t2 = Cons (rebind p (appTele t1' t2))
 >   where (p, t1') = unrebind rb
 > 
-> type M = ErrorT String LFreshM
+> type M = ExceptT String LFreshM
 >
 > lookUp :: Name Exp -> Tele -> M Exp
-> lookUp n Empty     = throwError $ "Not in scope: " ++ show n
+> lookUp n Empty     = throwE $ "Not in scope: " ++ show n
 > lookUp v (Cons rb) | v == x    = return a
 >                    | otherwise = lookUp v t'
 >   where ((x, Embed a), t') = unrebind rb
@@ -556,7 +556,7 @@ result (`multiSubst`).
 
 > unPi :: Exp -> M (Bind Tele Exp)
 > unPi (EPi bnd) = return bnd
-> unPi e         = throwError $ "Expected pi type, got " ++ show e ++ " instead"
+> unPi e         = throwE $ "Expected pi type, got " ++ show e ++ " instead"
 > 
 > infer :: Tele -> Exp -> M Exp
 > infer g (EVar x)  = lookUp x g
@@ -586,21 +586,21 @@ result (`multiSubst`).
 >   let ((x, Embed a), t') = unrebind rb
 >   check g e a
 >   checkList (subst x e g) (subst x e es) (subst x e t')
-> checkList _ _ _ = throwError $ "Unequal number of parameters and arguments"
+> checkList _ _ _ = throwE $ "Unequal number of parameters and arguments"
 > 
 > multiSubst :: Tele -> [Exp] -> Exp -> M Exp
 > multiSubst Empty     [] e = return e
 > multiSubst (Cons rb) (e1:es) e = multiSubst t' es e'
 >   where ((x,_), t') = unrebind rb
 >         e' = subst x e1 e
-> multiSubst _ _ _ = throwError $ "Unequal lengths in multiSubst" -- shouldn't happen
+> multiSubst _ _ _ = throwE $ "Unequal lengths in multiSubst" -- shouldn't happen
 > 
 > -- A conservative, inexpressive notion of equality, just for the sake
 > -- of the example.
 > checkEq :: Exp -> Exp -> M ()
 > checkEq e1 e2 = if aeq e1 e2 
 >                   then return () 
->                   else throwError $ "Couldn't match: " ++ show e1 ++ " " ++ show e2
+>                   else throwE $ "Couldn't match: " ++ show e1 ++ " " ++ show e2
 
 XXX insert type *checking* example (checking pi-type of a lambda) as
 illustration of unbind2
