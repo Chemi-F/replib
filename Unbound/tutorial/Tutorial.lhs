@@ -348,11 +348,11 @@ call to `lunbind` in place of the normal monadic sequencing used with
 > freshTest xs (Var x)     = (Var x)
 > freshTest xs (App t1 t2) = (App (freshTest xs t1) (freshTest xs t2))
 
- freshTest xs (Lam t)   = (Lam (freshTest xs t))
+> freshLam :: Term -> Bind (Name Term) Term
+> freshLam (Lam t) = t
 
- freshLam :: Term -> String
- freshLam (Lam t) = let (x, t) = unbind t
-                    in show x
+ freshLamBind :: Bind a b -> Term
+ freshLamBind (bind x (Var x)) = var "x"
 
 > class Pretty p where
 >   pprTest :: (Applicative m, LFresh m) => [String] -> p -> m Doc
