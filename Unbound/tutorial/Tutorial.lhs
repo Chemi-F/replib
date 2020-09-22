@@ -334,15 +334,36 @@ change we need to make is to use continuation-passing style for the
 call to `lunbind` in place of the normal monadic sequencing used with
 `unbind`.
 
+ class Pretty p where
+   ppr :: (Applicative m, LFresh m) => p -> m Doc
+
+ instance Pretty Term where
+   ppr (Var x)     = return . PP.text . show $ x
+   ppr (App t1 t2) = PP.parens <$> ((<+>) <$> ppr t1 <*> ppr t2)
+   ppr (Lam b)     =
+     lunbind b $ \(x,t) ->
+       ((PP.brackets . PP.text . show $ x) <+>) <$> ppr t
+
+> freshTest :: [String] -> Term -> Term
+> freshTest xs (Var x)     = (Var x)
+> freshTest xs (App t1 t2) = (App (freshTest xs t1) (freshTest xs t2))
+
+ freshTest xs (Lam t)   = (Lam (freshTest xs t))
+
+ freshLam :: Term -> String
+ freshLam (Lam t) = let (x, t) = unbind t
+                    in show x
+
 > class Pretty p where
->   ppr :: (Applicative m, LFresh m) => p -> m Doc
->
+>   pprTest :: (Applicative m, LFresh m) => [String] -> p -> m Doc
+> 
 > instance Pretty Term where
->   ppr (Var x)     = return . PP.text . show $ x
->   ppr (App t1 t2) = PP.parens <$> ((<+>) <$> ppr t1 <*> ppr t2)
->   ppr (Lam b)     =
+>   pprTest xs (Var x)     = if (elem (show x) xs) then return . PP.text $ "zzz"
+>                            else return . PP.text . show $ x
+>   pprTest xs (App t1 t2) = PP.parens <$> ((<+>) <$> pprTest xs t1 <*> pprTest xs t2)
+>   pprTest xs (Lam b)     =
 >     lunbind b $ \(x,t) ->
->       ((PP.brackets . PP.text . show $ x) <+>) <$> ppr t
+>       ((PP.brackets . PP.text . show $ x) <+>) <$> pprTest ((show x):xs) t
 
 Let's try it:
 
