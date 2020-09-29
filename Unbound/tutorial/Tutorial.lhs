@@ -344,12 +344,12 @@ call to `lunbind` in place of the normal monadic sequencing used with
      lunbind b $ \(x,t) ->
        ((PP.brackets . PP.text . show $ x) <+>) <$> ppr t
 
-> freshTest :: [String] -> Term -> Term
-> freshTest xs (Var x)     = (Var x)
-> freshTest xs (App t1 t2) = (App (freshTest xs t1) (freshTest xs t2))
+ freshTest :: [String] -> Term -> Term
+ freshTest xs (Var x)     = (Var x)
+ freshTest xs (App t1 t2) = (App (freshTest xs t1) (freshTest xs t2))
 
-> freshLam :: Term -> Bind (Name Term) Term
-> freshLam (Lam t) = t
+ freshLam :: Term -> Bind (Name Term) Term
+ freshLam (Lam t) = t
 
  freshLamBind :: Bind a b -> Term
  freshLamBind (bind x (Var x)) = var "x"
