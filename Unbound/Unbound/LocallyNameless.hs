@@ -101,6 +101,8 @@ module Unbound.LocallyNameless
 
     -- *** Bind constructors
     bind,
+    bindFst,
+    bindSnd,
     permbind,
     setbind,
     setbindAny,

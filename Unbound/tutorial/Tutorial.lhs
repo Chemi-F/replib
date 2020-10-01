@@ -207,6 +207,22 @@ small-step, call-by-value operational semantics.
 >       App <$> step t1 <*> pure t2
 >   <|> App <$> pure t1 <*> step t2
 
+> lamFst :: Term -> (Name Term)
+> lamFst (Lam b) = bindFst b
+> lamSnd :: Term -> Term
+> lamSnd (Lam b) = bindSnd b
+
+> lam1 :: (Name Term) -> Term -> Term
+> lam1 x t = Lam $ bind x t
+> substRename :: [String] -> Term -> Term
+> substRename xs (Var x)
+>                   | elem (show x) xs == True = var ("Free " ++ show x)
+>                   | otherwise                = (Var x)
+> substRename xs (App t1 t2) = (App (substRename xs t1) (substRename xs t2))
+> substRename xs (Lam b)     = let x = lamFst (Lam b)
+>                                  t = lamSnd (Lam b)
+>                                  in (lam1 x (substRename ((show x):xs) t))
+
 We define a `step` function with the type `Term -> MaybeT FreshM
 Term`.  `FreshM` is a monad provided by the binding library to handle
 fresh name generation.  It's fairly simple but works just fine in many
@@ -334,15 +350,15 @@ change we need to make is to use continuation-passing style for the
 call to `lunbind` in place of the normal monadic sequencing used with
 `unbind`.
 
- class Pretty p where
-   ppr :: (Applicative m, LFresh m) => p -> m Doc
-
- instance Pretty Term where
-   ppr (Var x)     = return . PP.text . show $ x
-   ppr (App t1 t2) = PP.parens <$> ((<+>) <$> ppr t1 <*> ppr t2)
-   ppr (Lam b)     =
-     lunbind b $ \(x,t) ->
-       ((PP.brackets . PP.text . show $ x) <+>) <$> ppr t
+> class Pretty p where
+>   ppr :: (Applicative m, LFresh m) => p -> m Doc
+>
+> instance Pretty Term where
+>   ppr (Var x)     = return . PP.text . show $ x
+>   ppr (App t1 t2) = PP.parens <$> ((<+>) <$> ppr t1 <*> ppr t2)
+>   ppr (Lam b)     =
+>     lunbind b $ \(x,t) ->
+>       ((PP.brackets . PP.text . show $ x) <+>) <$> ppr t
 
  freshTest :: [String] -> Term -> Term
  freshTest xs (Var x)     = (Var x)
@@ -354,16 +370,16 @@ call to `lunbind` in place of the normal monadic sequencing used with
  freshLamBind :: Bind a b -> Term
  freshLamBind (bind x (Var x)) = var "x"
 
-> class Pretty p where
->   pprTest :: (Applicative m, LFresh m) => [String] -> p -> m Doc
-> 
-> instance Pretty Term where
->   pprTest xs (Var x)     = if (elem (show x) xs) then return . PP.text $ "zzz"
->                            else return . PP.text . show $ x
->   pprTest xs (App t1 t2) = PP.parens <$> ((<+>) <$> pprTest xs t1 <*> pprTest xs t2)
->   pprTest xs (Lam b)     =
->     lunbind b $ \(x,t) ->
->       ((PP.brackets . PP.text . show $ x) <+>) <$> pprTest ((show x):xs) t
+ class Pretty p where
+   pprTest :: (Applicative m, LFresh m) => [String] -> p -> m Doc
+ 
+ instance Pretty Term where
+   pprTest xs (Var x)     = if (elem (show x) xs) then return . PP.text $ "zzz"
+                            else return . PP.text . show $ x
+   pprTest xs (App t1 t2) = PP.parens <$> ((<+>) <$> pprTest xs t1 <*> pprTest xs t2)
+   pprTest xs (Lam b)     =
+     lunbind b $ \(x,t) ->
+       ((PP.brackets . PP.text . show $ x) <+>) <$> pprTest ((show x):xs) t
 
 Let's try it:
 
