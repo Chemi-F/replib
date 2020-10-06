@@ -348,7 +348,6 @@ lunbind :: (LFresh m, Alpha p, Alpha t) => GenBind order card p t -> ((p, t) -> 
 lunbind (B p t) g =
   lfreshen p (\x _ -> g (x, openT x t))
 
-
 -- | Unbind two terms with the same locally fresh names, provided the
 --   patterns have the same number of binding variables.  See the
 --   documentation for 'unbind2' and 'lunbind' for more details.
