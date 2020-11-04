@@ -46,10 +46,10 @@ import qualified Text.Read as R
 bind :: (Alpha p, Alpha t) => p -> t -> Bind p t
 bind p t = B p (closeT p t)
 
-bindFst :: (Alpha p, Alpha t) => Bind p t -> p
-bindFst (B p t) = p
-bindSnd :: (Alpha p, Alpha t) => Bind p t -> t
-bindSnd (B p t) = t
+bindExtPat :: (Alpha p, Alpha t) => Bind p t -> p
+bindExtPat (B p _) = p
+bindExtTerm :: (Alpha p, Alpha t) => Bind p t -> t
+bindExtTerm (B _ t) = t
 
 instance (Alpha a, Alpha b, Read a, Read b) => Read (Bind a b) where
          readPrec = R.parens $ (R.prec app_prec $ do
