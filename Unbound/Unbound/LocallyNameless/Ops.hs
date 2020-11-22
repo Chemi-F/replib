@@ -46,6 +46,7 @@ import qualified Text.Read as R
 bind :: (Alpha p, Alpha t) => p -> t -> Bind p t
 bind p t = B p (closeT p t)
 
+-- Added by Fujioka
 bindExtPat :: (Alpha p, Alpha t) => Bind p t -> p
 bindExtPat (B p _) = p
 bindExtTerm :: (Alpha p, Alpha t) => Bind p t -> t

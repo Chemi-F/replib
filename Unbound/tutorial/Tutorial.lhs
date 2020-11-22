@@ -207,19 +207,6 @@ small-step, call-by-value operational semantics.
 >       App <$> step t1 <*> pure t2
 >   <|> App <$> pure t1 <*> step t2
 
-test code
-
-lam1 :: (Name Term) -> Term -> Term
-lam1 x t = Lam $ bind x t
-substRename :: [String] -> Term -> Term
-substRename xs (Var x)
-                  | elem (show x) xs == True = var ("Free " ++ show x)
-                  | otherwise                = (Var x)
-substRename xs (App t1 t2) = (App (substRename xs t1) (substRename xs t2))
-substRename xs (Lam b)     = let x = lamPat (Lam b)
-                                 t = lamTerm (Lam b)
-                                 in (lam1 x (substRename ((show x):xs) t))
-
 We define a `step` function with the type `Term -> MaybeT FreshM
 Term`.  `FreshM` is a monad provided by the binding library to handle
 fresh name generation.  It's fairly simple but works just fine in many
@@ -384,41 +371,6 @@ New code
 >
 > ppr :: (Applicative m, LFresh m) => Term -> m Doc
 > ppr t = pprPre t (pprCheckVarName [] t)
-
-Test code
-
-lamPat :: Term -> (Name Term)
-lamPat (Lam b) = bindExtPat b
-
-substRename :: [String] -> Term -> Term
-substRename xs (Var x)
-                  | elem (show x) xs == True = var ("Free " ++ show x)
-                  | otherwise                = (Var x)
-substRename xs (App t1 t2) = (App (substRename xs t1) (substRename xs t2))
-substRename xs (Lam b)     = let x = lamPat (Lam b)
-                                 t = lamTerm (Lam b)
-                                 in (lam1 x (substRename ((show x):xs) t))
-
-freshTest :: [String] -> Term -> Term
-freshTest xs (Var x)     = (Var x)
-freshTest xs (App t1 t2) = (App (freshTest xs t1) (freshTest xs t2))
-
-freshLam :: Term -> Bind (Name Term) Term
-freshLam (Lam t) = t
-
-freshLamBind :: Bind a b -> Term
-freshLamBind (bind x (Var x)) = var "x"
-
-class Pretty p where
-  pprPre :: (Applicative m, LFresh m) => [String] -> p -> m Doc
-
-instance Pretty Term where
-  pprPre xs (Var x)     = if (elem (show x) xs) then return . PP.text $ "zzz"
-                           else return . PP.text . show $ x
-  pprPre xs (App t1 t2) = PP.parens <$> ((<+>) <$> pprPre xs t1 <*> pprPre xs t2)
-  pprPre xs (Lam b)     =
-    lunbind b $ \(x,t) ->
-      ((PP.brackets . PP.text . show $ x) <+>) <$> pprPre ((show x):xs) t
 
 Let's try it:
 
